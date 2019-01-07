@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config >
+  <server   name="gandalf"
+            ip="127.0.0.1"
+            puerto="5000"/>
+  <database path="database.txt"
+            passwdpath="password.txt"/>
+  <log path="logPR.txt"/>
+
+</config>
