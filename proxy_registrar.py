@@ -78,20 +78,30 @@ class EchoHandler(socketserver.DatagramRequestHandler):
                     print("Enviando al servidor:")
                     print(line.decode('utf-8'))
                     #para recibir la respuesta al invite
-                    data_ok = my_socket.recv(1024)
+                    data = my_socket.recv(1024)
                     print("El servidor responde")
-                    print(data_ok.decode('utf-8'))
-                    self.wfile.write(bytes(data_ok, 'utf-8'))
+                    print(data.decode('utf-8'))
+                    self.wfile.write(bytes(data.decode('utf-8'), 'utf-8'))
+
+
+
 
             except:
-                    #print("User " + dest + " Not Found")
-                    data = "SIP/2.0 404 User Not Found\r\n\r\n"
-                    self.wfile.write(bytes(data, 'utf-8'))
+                    print("User " + dest + " Not Found")
+                    dat = "SIP/2.0 404 User Not Found\r\n\r\n"
+                    self.wfile.write(bytes(dat, 'utf-8'))
 
 
         elif client_method == 'ACK':
+            print("El cliente manda ack:")
+            dest =  message[1].split(':')[1]
+            dest_ip = self.dicc[dest]['usr_ip']
+            dest_port = int(self.dicc[dest]['usr_port'])
+            with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as my_socket:
+                my_socket.connect((dest_ip, dest_port))
+                my_socket.send(bytes(line.decode('utf-8'), 'utf-8'))
 
-            print("Vamos a ejecutar")
+
 
         elif client_method == 'BYE':
             self.wfile.write(b"SIP/2.0 200 OK\n")

@@ -93,8 +93,11 @@ if __name__ == '__main__':
             data = my_socket.recv(1024)
             print('Recibido:')
             print(data.decode('utf-8'))
-        #    print('Recibiendo: ')
-            #print(data.decode('utf-8'))
+            line_ack = ('ACK sip:' + OPCION + ' SIP/2.0')
+            my_socket.send(bytes(line_ack, 'utf-8'))
+
+
+
 
         elif METODO == "BYE":
             line = METODO + " sip:" + OPCION + " SIP/2.0\r\n\r\n"
