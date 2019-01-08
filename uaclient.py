@@ -9,6 +9,7 @@ import sys
 from os import system
 from xml.sax import make_parser
 from xml.sax.handler import ContentHandler
+import hashlib
 
 # Cliente UDP simple.
 
@@ -79,6 +80,25 @@ if __name__ == '__main__':
             print(line)
             my_socket.send(bytes(line, 'utf-8') + b'\r\n')
             data = my_socket.recv(1024)
+            #print('Recibido:')
+            req = data.decode('utf-8')
+        #    print(data.decode('utf-8'))
+            if data.decode('utf-8').split(' ')[1] == '401':
+                nonce = data.decode('utf-8').split()[-1].split('"')[1]
+                print('Recibido:', data.decode('utf-8'))
+                h = hashlib.md5()
+                h.update(bytes(password, 'utf-8') + bytes(nonce, 'utf-8'))
+                nonce_aut = h.hexdigest()
+                line = METODO + " sip:" + username + ":" + server_port
+                line += " SIP/2.0\r\nExpires: " + str(OPCION) + "\r\n"
+                line += 'Authorization: Digest response="' + nonce_aut
+                line += '"\r\n\r\n'
+                print("Enviando:")
+                print(line)
+                my_socket.send(bytes(line, 'utf-8'))
+                data = my_socket.recv(1024)
+                print('Recibido:'+ '\r\n')
+                print(data.decode('utf-8'))
 
         elif METODO == "INVITE":
             line = METODO + " sip:" + OPCION + " SIP/2.0\r\n"

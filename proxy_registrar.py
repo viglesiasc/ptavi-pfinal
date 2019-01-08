@@ -3,7 +3,8 @@
 """
 Clase (y programa principal) para un servidor de eco en UDP simple
 """
-
+import hashlib
+import random
 import socketserver
 import sys
 import socket
@@ -36,10 +37,12 @@ except (ValueError, IndexError):
     sys.exit("Usage: python3 proxy_registrar.py config")
 
 
+
 class EchoHandler(socketserver.DatagramRequestHandler):
     """
     Echo server class
     """
+
     dicc = {}
     def handle(self):
 
@@ -55,9 +58,55 @@ class EchoHandler(socketserver.DatagramRequestHandler):
         if client_method == 'REGISTER':
             usr = message[1].split(':')[1]
             usr_port = message[1].split(':')[2]
+
+
             if usr not in self.dicc:
+                nonce_num = str(random.randint(00000000000000000000,
+                                               99999999999999999999))
                 self.dicc[usr] = {'usr_ip': client_ip,
-                             'usr_port': usr_port}
+                             'usr_port': usr_port,
+                             'authorized': False,
+                             'nonce': nonce_num}
+
+                line = 'SIP/2.0 401 Unauthorized\r\nWWW-Authenticate: Digest'
+                line += ' nonce="' + nonce_num + '"\r\n\r\n'
+                print("Enviando:")
+                print(line)
+                self.wfile.write(bytes(line, 'utf-8'))
+
+            elif self.dicc[usr]['authorized'] == False:
+                file = open(datos['database']['passwdpath'], "r")
+                lines = file.readlines()
+                password = "empty"
+                for line in lines:
+                    usr_line = line.split()[0].split("-")[0]
+                    if usr == usr_line:
+                        password = line.split()[0].split("-")[1]
+
+                h = hashlib.md5()
+                h.update(bytes(password, 'utf-8') + bytes(self.dicc[usr]['nonce'], 'utf-8'))
+                authentication = h.hexdigest()
+                if authentication == message[-1].split('"')[1]:
+                    self.dicc[usr]['authorized'] = True
+                    line = "SIP/2.0 200 OK\r\n\r\n"
+                    print("Enviando:")
+                    print(line)
+                    self.wfile.write(bytes(line, 'utf-8'))
+
+                else:
+                    line = 'SIP/2.0 401 Unauthorized\r\nWWW-Authenticate:'
+                    line += ' Digest nonce="' + nonce_num + '"\r\n\r\n'
+                    print("Enviando -- ", line)
+                    self.wfile.write(bytes(line, 'utf-8'))
+
+            else:
+                line = "SIP/2.0 200 OK\r\n\r\n"
+                print("Enviando:")
+                print(line)
+                self.wfile.write(bytes(line, 'utf-8'))
+
+
+
 
 
 
@@ -105,8 +154,7 @@ class EchoHandler(socketserver.DatagramRequestHandler):
 
         elif client_method == 'BYE':
             self.wfile.write(b"SIP/2.0 200 OK\n")
-        else:
-            self.wfile.write(b"SIP/2.0 405 Method Not Allowed\n")
+
 
 if __name__ == "__main__":
     try:

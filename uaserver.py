@@ -38,9 +38,9 @@ class EchoHandler(socketserver.DatagramRequestHandler):
             print(line)
             mensaje = line.replace("\r\n", " ")
         elif client_method == "ACK":
-            aEjecutar = './mp32rtp -i 127.0.0.1 -p 23032 < ' + cancion.mp3
-            print("Vamos a ejecutar", aEjecutar)
-            os.system(aEjecutar)
+            #aEjecutar = './mp32rtp -i 127.0.0.1 -p 23032 < ' + cancion.mp3
+            print("Vamos a ejecutar")
+            #os.system(aEjecutar)
 
 
 
