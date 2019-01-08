@@ -41,6 +41,11 @@ class EchoHandler(socketserver.DatagramRequestHandler):
             #aEjecutar = './mp32rtp -i 127.0.0.1 -p 23032 < ' + cancion.mp3
             print("Vamos a ejecutar")
             #os.system(aEjecutar)
+        elif client_method == "BYE":
+            line = "SIP/2.0 200 OK\r\n"
+            self.wfile.write(bytes(line, 'utf-8'))
+            print("Respuesta al proxy:")
+            print(line)
 
 
 

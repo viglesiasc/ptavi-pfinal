@@ -121,8 +121,11 @@ if __name__ == '__main__':
 
         elif METODO == "BYE":
             line = METODO + " sip:" + OPCION + " SIP/2.0\r\n\r\n"
-            print("Enviando -- ", line)
+            print("Enviando:")
+            print(line)
             my_socket.send(bytes(line, 'utf-8'))
             data = my_socket.recv(1024)
             data = data.decode('utf-8')
-            print('Recibido -- ', data)
+            print('Recibido:')
+            print(data)
+            
