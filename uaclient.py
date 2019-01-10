@@ -6,15 +6,11 @@ Programa cliente que abre un socket a un servidor
 import time
 import socket
 import sys
+import os
 from os import system
 from xml.sax import make_parser
 from xml.sax.handler import ContentHandler
 import hashlib
-
-
-
-
-
 
 
 class XMLHandler(ContentHandler):
@@ -23,11 +19,11 @@ class XMLHandler(ContentHandler):
 
     def startElement(self, name, attrs):
         var = {'account': {'username', 'passwd'},
-                    'uaserver': {'ip', 'puerto'},
-                    'rtpaudio': {'puerto'},
-                    'regproxy': {'ip', 'puerto'},
-                    'log': {'path'},
-                    'audio': {'path'}}
+               'uaserver': {'ip', 'puerto'},
+               'rtpaudio': {'puerto'},
+               'regproxy': {'ip', 'puerto'},
+               'log': {'path'},
+               'audio': {'path'}}
         vars = {}
         if name in var:
             for atribute in var[name]:
@@ -53,7 +49,6 @@ def log(event, ip, port, message):
 if __name__ == '__main__':
 
     try:
-    # Dirección IP del servidor.
         CONFIG = sys.argv[1]
         METODO = sys.argv[2]
         OPCION = sys.argv[3]
@@ -96,7 +91,6 @@ if __name__ == '__main__':
             log("Sent to", proxy_ip, proxy_port, message_log)
             data = my_socket.recv(1024)
 
-
             if data.decode('utf-8').split(' ')[1] == '401':
                 nonce = data.decode('utf-8').split()[-1].split('"')[1]
                 print('Recibido:')
@@ -118,7 +112,7 @@ if __name__ == '__main__':
                 log("Sent to", proxy_ip, proxy_port, message_log)
 
                 data = my_socket.recv(1024)
-                print('Recibido:'+ '\r\n')
+                print('Recibido:' + '\r\n')
                 print(data.decode('utf-8'))
 
         elif METODO == "INVITE":
@@ -136,6 +130,7 @@ if __name__ == '__main__':
             data = my_socket.recv(1024)
             print('Recibido:')
             print(data.decode('utf-8'))
+            rtp_server_port = data.decode('utf-8').split(' ')[-2]
             message_log = data.decode('utf-8').replace("\r\n", " ")
             log("Received from", proxy_ip, str(proxy_port), message_log)
             line_ack = ('ACK sip:' + OPCION + ' SIP/2.0')
@@ -144,6 +139,12 @@ if __name__ == '__main__':
             my_socket.send(bytes(line_ack, 'utf-8'))
             message_log = line_ack.replace("\r\n", " ")
             log("Sent to", proxy_ip, str(proxy_port), message_log)
+
+            aEjecutar = "./mp32rtp -i " + "127.0.0.1" + " -p "
+            aEjecutar += rtp_server_port + " < " + audio_file
+            print("Vamos a ejecutar", aEjecutar)
+            os.system(aEjecutar)
+            print("Audio enviado")
 
         elif METODO == "BYE":
             line = METODO + " sip:" + OPCION + " SIP/2.0\r\n\r\n"

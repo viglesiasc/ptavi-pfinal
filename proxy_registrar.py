@@ -14,7 +14,6 @@ from xml.sax.handler import ContentHandler
 import json
 
 
-
 class XMLHandler(ContentHandler):
     def __init__(self):
         self.var = {}
@@ -33,15 +32,15 @@ class XMLHandler(ContentHandler):
         return self.var
 
 
-
-
 class EchoHandler(socketserver.DatagramRequestHandler):
     """
     Echo server class
     """
 
     dicc = {}
+
     dicc_method = {"REGISTER", "ACK", "INVITE", "BYE"}
+
     def register(self):
         json.dump(self.dicc, open(database_path, 'w'))
 
@@ -51,7 +50,6 @@ class EchoHandler(socketserver.DatagramRequestHandler):
                 self.list_users = json.load(file)
         except:
             self.register()
-
 
     def handle(self):
 
@@ -69,20 +67,19 @@ class EchoHandler(socketserver.DatagramRequestHandler):
                 usr_port = message[1].split(':')[2]
                 expires = message[3].split('\r')[0]
 
-
                 if usr not in self.dicc:
                     nonce_num = str(random.randint(00000000000000000000,
                                                    99999999999999999999))
 
-
                     self.dicc[usr] = {'usr_ip': client_ip,
-                                 'usr_port': usr_port,
-                                 'authorized': False,
-                                 'nonce': nonce_num,
-                                 'expires': expires}
+                                      'usr_port': usr_port,
+                                      'authorized': False,
+                                      'nonce': nonce_num,
+                                      'expires': expires}
 
-                    line = 'SIP/2.0 401 Unauthorized\r\nWWW-Authenticate: Digest'
-                    line += ' nonce="' + nonce_num + '"\r\n\r\n'
+                    line = 'SIP/2.0 401 Unauthorized' + "\r\n"
+                    line += 'WWW-Authenticate: Digest' + ' nonce="'
+                    line += nonce_num + '"\r\n\r\n'
                     print("Enviando:")
                     print(line)
                     self.wfile.write(bytes(line, 'utf-8'))
@@ -97,7 +94,8 @@ class EchoHandler(socketserver.DatagramRequestHandler):
                             password = line.split()[0].split("-")[1]
 
                     h = hashlib.md5()
-                    h.update(bytes(password, 'utf-8') + bytes(self.dicc[usr]['nonce'], 'utf-8'))
+                    nonce_ = self.dicc[usr]['nonce']
+                    h.update(bytes(password, 'utf-8') + bytes(nonce_, 'utf-8'))
                     authentication = h.hexdigest()
                     if authentication == message[-1].split('"')[1]:
                         self.dicc[usr]['authorized'] = True
@@ -120,38 +118,30 @@ class EchoHandler(socketserver.DatagramRequestHandler):
 
                 self.is_registered()
 
-
             if client_method == 'INVITE':
                 print("El cliente manda:")
-                #message = line.decode('utf-8').replace("\r\n", " ")
-                dest =  message[1].split(':')[1]
+                dest = message[1].split(':')[1]
 
-                dest_ip = self.dicc[dest]['usr_ip']
-                dest_port = int(self.dicc[dest]['usr_port'])
-
-
-                try:
+                if dest in self.dicc:
+                    dest_ip = self.dicc[dest]['usr_ip']
+                    dest_port = int(self.dicc[dest]['usr_port'])
                     with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as my_socket:
                         print(line.decode('utf-8'))
                         my_socket.connect((dest_ip, dest_port))
                         my_socket.send(bytes(line.decode('utf-8'), 'utf-8'))
                         print("Enviando al servidor:")
                         print(line.decode('utf-8'))
-                        #para recibir la respuesta al invite
                         data = my_socket.recv(1024)
                         print("El servidor responde")
                         print(data.decode('utf-8'))
                         self.wfile.write(bytes(data.decode('utf-8'), 'utf-8'))
-
-
-                except:
-                        print("User " + dest + " Not Found")
-                        dat = "SIP/2.0 404 User Not Found\r\n\r\n"
-                        self.wfile.write(bytes(dat, 'utf-8'))
-
+                else:
+                    print("User " + dest + " Not Found")
+                    dat = "SIP/2.0 404 User Not Found\r\n\r\n"
+                    self.wfile.write(bytes(dat, 'utf-8'))
 
             elif client_method == 'ACK':
-                dest =  message[1].split(':')[1]
+                dest = message[1].split(':')[1]
                 dest_ip = self.dicc[dest]['usr_ip']
                 dest_port = int(self.dicc[dest]['usr_port'])
                 with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as my_socket:
@@ -160,33 +150,22 @@ class EchoHandler(socketserver.DatagramRequestHandler):
                     my_socket.send(bytes(line.decode('utf-8'), 'utf-8'))
                     data = my_socket.recv(1024)
 
-
-
             elif client_method == 'BYE':
                 print("El cliente manda:")
-                #message = line.decode('utf-8').replace("\r\n", " ")
-                dest =  message[1].split(':')[1]
-
+                dest = message[1].split(':')[1]
                 dest_ip = self.dicc[dest]['usr_ip']
                 dest_port = int(self.dicc[dest]['usr_port'])
 
-
-                try:
-                    with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as my_socket:
-                        print(line.decode('utf-8'))
-                        my_socket.connect((dest_ip, dest_port))
-                        my_socket.send(bytes(line.decode('utf-8'), 'utf-8'))
-                        print("Enviando al servidor:")
-                        print(line.decode('utf-8'))
-                        data = my_socket.recv(1024)
-                        print("El servidor responde")
-                        print(data.decode('utf-8'))
-                        self.wfile.write(bytes(data.decode('utf-8'), 'utf-8'))
-
-                except:
-                        print("User " + dest + " Not Found")
-                        dat = "SIP/2.0 404 User Not Found\r\n\r\n"
-                        self.wfile.write(bytes(dat, 'utf-8'))
+                with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as my_socket:
+                    print(line.decode('utf-8'))
+                    my_socket.connect((dest_ip, dest_port))
+                    my_socket.send(bytes(line.decode('utf-8'), 'utf-8'))
+                    print("Enviando al servidor:")
+                    print(line.decode('utf-8'))
+                    data = my_socket.recv(1024)
+                    print("El servidor responde")
+                    print(data.decode('utf-8'))
+                    self.wfile.write(bytes(data.decode('utf-8'), 'utf-8'))
 
             elif client_method not in self.dicc_method:
                 req = "SIP/2.0 405 Method Not Allowed\r\n\r\n"
@@ -199,7 +178,6 @@ class EchoHandler(socketserver.DatagramRequestHandler):
             print("Enviando:")
             print(req)
             self.wfile.write(bytes(req, 'utf-8'))
-
 
 
 if __name__ == "__main__":
@@ -221,10 +199,8 @@ if __name__ == "__main__":
     passwd_path = datos['database']['passwdpath']
     log_path = datos['log']['path']
 
-
     # Creamos servidor de eco y escuchamos
     serv = socketserver.UDPServer((server_ip, server_port), EchoHandler)
-
     print("Server " + server_name + " listening at port "
           + str(server_port) + "..." + "\n")
     serv.serve_forever()
