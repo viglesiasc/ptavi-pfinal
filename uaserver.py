@@ -30,14 +30,14 @@ class EchoHandler(socketserver.DatagramRequestHandler):
         if client_method == "INVITE":
             line = "SIP/2.0 100 Trying\r\n\r\n" + "SIP/2.0 180 Ringing\r\n\r\n"
             line += "SIP/2.0 200 OK\r\n"
-            line += "Content-Type: application/sdp\r\nv=0\r\no="
-            line += " " + "\r\ns=lasesion\r\nt=0\r\nm=audio "
-            line +=  " RTP\r\n"
+            line += "Content-Type: application/sdp\r\nv=0\r\no=" + username
+            line += " " + server_ip + "\r\ns=lasesion\r\nt=0\r\nm=audio "
+            line += rtp_port + " RTP\r\n"
             self.wfile.write(bytes(line, 'utf-8'))
             print("Respuesta al proxy:")
             print(line)
-            mensaje = line.replace("\r\n", " ")
         elif client_method == "ACK":
+            print("\r\n")
             #aEjecutar = './mp32rtp -i 127.0.0.1 -p 23032 < ' + cancion.mp3
             print("Vamos a ejecutar")
             #os.system(aEjecutar)
